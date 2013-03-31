@@ -19,16 +19,24 @@
 
 if platform?("ubuntu", "debian")
 
-  package "locales" do
-    action :install
-  end
+  unless ENV["LANG"] == node[:locale][:lang] &&
+    (node[:locale][:language].nil? || ENV["LANGUAGE"] == node[:locale][:language]) &&
+    (node[:locale][:lc_all].nil? || ENV["LC_ALL"] == node[:locale][:lc_all])
 
-  execute "Update locale" do
-  	command_string = "update-locale LANG=#{node[:locale][:lang]}"
-  	command_string << " LANGUAGE=#{node[:locale][:language]}" unless node[:locale][:language].nil?
-  	command_string << " LC_ALL=#{node[:locale][:lc_all]}" unless node[:locale][:lc_all].nil?
-    command command_string
-    not_if "cat /etc/default/locale | grep -qx LANG=#{node[:locale][:lang]}"
+    package "locales" do
+      action :install
+    end
+
+    execute "Update locale" do
+      command_string = "update-locale LANG=#{node[:locale][:lang]}"
+      command_string << " LANGUAGE=#{node[:locale][:language]}" unless node[:locale][:language].nil?
+      command_string << " LC_ALL=#{node[:locale][:lc_all]}" unless node[:locale][:lc_all].nil?
+      command command_string
+    end
+    
+    ENV['LANG'] = node[:locale][:lang]
+    ENV['LANGUAGE'] = node[:locale][:language] unless node[:locale][:language].nil?
+    ENV['LC_ALL'] = node[:locale][:lc_all] unless node[:locale][:lc_all].nil?
   end
 
 end
